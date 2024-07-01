@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
-from sklearn.feature_selection import VarianceThreshold
+from MLP.nn import MLP
 
-df5 = pd.read_csv('../Data/df_2classification.csv')
+df5 = pd.read_csv('Data/df_2classification.csv')
 
 
 # Want to develop a dataframe of fingerprints for the molecules and use them in a classification problem for
@@ -33,17 +33,43 @@ def fingerprints(smiles):
             fp_data = np.vstack([fp_data, row])
         i = i + 1
 
-    fingerprint_descriptors = pd.DataFrame(fp_data)
-
-    print(fp_data)
-
-    return fingerprint_descriptors
+    return fp_data
 
 
-df_fps = fingerprints(df5.canonical_smiles)
+np_fps = fingerprints(df5.canonical_smiles)
+list_fps = np_fps.tolist()
 
-df_fps_classification = pd.concat([df_fps, df5.bioactivity_class], axis=1)
-
-df_fps_classification['bioactivity_class'] = df_fps_classification['bioactivity_class'].map(
+df5['bioactivity_class'] = df5['bioactivity_class'].map(
     {'active': 1, 'inactive': 0})
+
+
+bioactivity_data = []
+for i in df5['bioactivity_class']:
+    bioactivity_data.append(i)
+
+
+n = MLP(350, [300, 200, 100, 70, 50, 10, 1])
+
+xs = list_fps
+
+ys = bioactivity_data # desired targets
+
+for k in range(50):
+
+    # forward pass
+    ypred = [n(x) for x in xs]
+    loss = sum((yout - ygt) ** 2 for ygt, yout in zip(ys, ypred))
+
+    # back pass
+    for p in n.parameters():
+        p.grad = 0.0
+    loss.backward()
+
+    # gradient descent
+    for p in n.parameters():
+        p.data += -0.05 * p.grad
+
+    print(k, loss.data)
+
+
 
