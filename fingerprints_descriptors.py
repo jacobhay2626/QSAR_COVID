@@ -47,12 +47,17 @@ bioactivity_data = []
 for i in df5['bioactivity_class']:
     bioactivity_data.append(i)
 
+# Two hidden layers
+# Number of hidden neurons = 2/3 input layer + output layer
+n = MLP(350, [150, 84, 1])
 
-n = MLP(350, [300, 200, 100, 70, 50, 10, 1])
 
-xs = list_fps
+###############
+# Need to work out training splits
+xs = []
 
-ys = bioactivity_data # desired targets
+ys = []  # desired targets
+################
 
 for k in range(50):
 
